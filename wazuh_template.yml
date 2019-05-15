@@ -67,7 +67,6 @@ Metadata:
           - WazuhInstanceType
           - ElasticInstanceType
           - KibanaInstanceType
-          - SplunkInstanceType
           - SshUsername
           - SshPassword
       - 
@@ -88,12 +87,6 @@ Metadata:
           - KibanaPort
           - KibanaUsername
           - KibanaPassword
-      -
-        Label:
-          default: "Splunk configuration"
-        Parameters:
-          - SplunkUsername
-          - SplunkPassword
       -
         Label:
           default: "Integration keys"
@@ -263,18 +256,6 @@ Parameters:
     Default: t2.medium
     Description: Type of EC2 instance for Kibana instance
     Type: String
-
-  SplunkInstanceType:
-    AllowedValues:
-      - t2.medium
-      - t2.large
-      - m5.large
-      - r5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.medium
-    Description: Type of EC2 instance for Splunk instance
-    Type: String
-
   # Wazuh configuration
   WazuhServerPort:
     Default: '1514'
@@ -335,22 +316,6 @@ Parameters:
     ConstraintDescription: Only alphanumeric characters
   KibanaPassword:
     Description: Password for Kibana access
-    NoEcho: 'True'
-    Type: String
-    MinLength: '1'
-    MaxLength: '48'
-    AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: Only alphanumeric characters
-  SplunkUsername:
-    Default: wazuh
-    Description: Username for Splunk access
-    Type: String
-    MinLength: '1'
-    MaxLength: '16'
-    AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: Only alphanumeric characters
-  SplunkPassword:
-    Description: Password for Splunk access
     NoEcho: 'True'
     Type: String
     MinLength: '1'
@@ -564,23 +529,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-WazuhSecurityGroup'
-  SplunkSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupDescription: Splunk security group
-      VpcId: !Ref WazuhVpc
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8000
-          ToPort: 8000
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-SplunkSecurityGroup'
+  
   # Elasticsearch load balancer
   ElbElasticSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -874,7 +823,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_elastic.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/elastic/wazuh_cf_elastic.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/elastic/wazuh_cf_elastic.sh
               mode: '000700'
               owner: root
               group: root
@@ -953,7 +902,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_kibana.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/elastic/wazuh_cf_kibana.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/elastic/wazuh_cf_kibana.sh
               mode: '000700'
               owner: root
               group: root
@@ -993,71 +942,6 @@ Resources:
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Kibana --region ${AWS::Region}
     DependsOn: GatewayToInternet
 
-  # Kibana instance
-  SplunkInstance:
-    Type: AWS::EC2::Instance
-    Metadata:
-      'AWS::CloudFormation::Init':
-        configSets:
-          SplunkInstallationSet:
-            - SplunkFiles
-            - SplunkInstall
-        SplunkFiles:
-          files:
-            /tmp/wazuh_cf_settings:
-              content: !Sub |
-                SshUsername: ${SshUsername}
-                SshPassword: ${SshPassword}
-                SplunkUsername: ${SplunkUsername}
-                SplunkPassword: ${SplunkPassword}
-                WazuhApiAdminUsername: ${WazuhApiAdminUsername}
-                WazuhApiAdminPassword: ${WazuhApiAdminPassword}
-                WazuhApiPort: ${WazuhApiPort}
-                WazuhMasterIP: ${WazuhMasterInstance.PrivateIp}
-              mode: '000600'
-              owner: root
-              group: root
-            /tmp/wazuh_cf_splunk.sh:
-              source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/splunk/wazuh_cf_splunk.sh
-              mode: '000700'
-              owner: root
-              group: root
-        SplunkInstall:
-          commands:
-            01_RunInstallationScript:
-              command: /tmp/wazuh_cf_splunk.sh
-    Properties:
-      ImageId: !FindInMap
-        - "RegionMap"
-        - Ref: "AWS::Region"
-        - HVM64
-      InstanceType: !Ref SplunkInstanceType
-      IamInstanceProfile: !Ref InstanceProfile
-      KeyName: !Ref KeyPairName
-      BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize: 100
-            VolumeType: gp2
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-          GroupSet: 
-            - Ref: "SplunkSecurityGroup"
-          SubnetId: 
-            Ref: "SubnetWazuh"
-      Tags:
-        - Key: Name
-          Value: Splunk
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash -xe
-          /opt/aws/bin/cfn-init --stack ${AWS::StackName} --resource SplunkInstance --configsets SplunkInstallationSet --region ${AWS::Region}
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Splunk --region ${AWS::Region}
-    DependsOn: GatewayToInternet
-
-
   # Wazuh master instance
   WazuhMasterInstance:
     Type: AWS::EC2::Instance
@@ -1093,7 +977,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_master.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/cluster/wazuh_cf_master.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/wazuh/cluster/wazuh_cf_master.sh
               mode: '000700'
               owner: root
               group: root
@@ -1178,7 +1062,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_worker.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/cluster/wazuh_cf_worker.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/wazuh/cluster/wazuh_cf_worker.sh
               mode: '000700'
               owner: root
               group: root
@@ -1241,9 +1125,6 @@ Outputs:
   KibanaUsername:
     Description: Username for Kibana WUI
     Value: !Ref KibanaUsername
-  SplunkUsername:
-    Description: Username for Splunk WUI
-    Value: !Ref SplunkUsername
   WazuhServerPort:
     Description: Port number for agents communication with Wazuh server
     Value: !Ref WazuhServerPort
@@ -1271,6 +1152,3 @@ Outputs:
   KibanaInstanceType:
     Description: Kibana server instance type
     Value: !Ref KibanaInstanceType
-  SplunkInstanceType:
-    Description: Splunk server instance type
-    Value: !Ref SplunkInstanceType
