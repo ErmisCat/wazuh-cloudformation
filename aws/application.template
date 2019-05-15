@@ -54,10 +54,9 @@ Metadata:
       - QSS3BucketName
       - QSS3KeyPrefix
     - Label:
-        default: Trend Micro Deep Security
+        default: Wazuh agents
       Parameters:
-      - DeepSecurityConsole
-      - DeepSecurityHeartbeat
+      - WazuhManagerIp
 Parameters:
   pSecurityAlarmTopic:
     Description: SNS topic for alarms and notifications
@@ -163,12 +162,9 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
-  DeepSecurityConsole:
-    Description: URL of the Deep Security Console
+  WazuhManagerIp:
+    Description: URL of the Wazuh cluster load balancer
     Type: String
-  DeepSecurityHeartbeat:
-      Description: URL for Deep Security heartbeats
-      Type: String
 Mappings:
   elbMap:
     ap-northeast-1:
@@ -675,16 +671,19 @@ Resources:
           sleep 10
           service nginx restart
 
-          # Wazuh Agent setup
-          wget ${DSMURL}/software/agent/amzn1/x86_64/ -O /tmp/agent.rpm --no-check-certificate --quiet
+          # Install Wazuh agent
+          cat > /etc/yum.repos.d/wazuh.repo <<\EOF
+          [wazuh_repo]
+          gpgcheck=1
+          gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH
+          enabled=1
+          name=Wazuh repository
+          baseurl=https://packages.wazuh.com/3.x/yum/
+          protect=1
+          EOF
 
-          rpm -ihv /tmp/agent.rpm
-          sleep 30
-
-          /opt/ds_agent/dsa_control -r
-          /opt/ds_agent/dsa_control -a ${DSMHB} "policy:Linux Server"
-        - DSMURL: !Ref DeepSecurityConsole
-          DSMHB: !Ref DeepSecurityHeartbeat
+          WAZUH_MANAGER_IP="${MasterIp}" yum install wazuh-agent
+        - DSMURL: !Ref WazuhManagerIp
   rAutoScalingGroupWeb:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: rAutoScalingConfigWeb
@@ -936,21 +935,25 @@ Resources:
             # Inject the security control matrix file location.
             sudo sed -i "s|{compliance-body-matrix}|https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}assets/$COMPLIANCE_MATRIX_FILENAME|g" $LANDING_PAGE
 
-            #Deep Security Setup
-            wget ${DSMURL}/software/agent/amzn1/x86_64/ -O /tmp/agent.rpm --no-check-certificate --quiet
+            # Install Wazuh agent
+            cat > /etc/yum.repos.d/wazuh.repo <<\EOF
+            [wazuh_repo]
+            gpgcheck=1
+            gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH
+            enabled=1
+            name=Wazuh repository
+            baseurl=https://packages.wazuh.com/3.x/yum/
+            protect=1
+            EOF
 
-            rpm -ihv /tmp/agent.rpm
-            sleep 30
+            WAZUH_MANAGER_IP="${MasterIp}" yum install wazuh-agent
 
-            /opt/ds_agent/dsa_control -r
-            /opt/ds_agent/dsa_control -a ${DSMHB} "policy:Linux Server"
           - QSS3Region:
               !If
               - GovCloudCondition
               - s3-us-gov-west-1
               - s3
-            DSMURL: !Ref DeepSecurityConsole
-            DSMHB: !Ref DeepSecurityHeartbeat
+            MasterIp: !Ref WazuhManagerIp
   rAutoScalingGroupApp:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: rAutoScalingConfigApp
