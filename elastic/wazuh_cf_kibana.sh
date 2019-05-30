@@ -128,8 +128,8 @@ sleep 60
 echo "Started service." >> /tmp/log
 
 # Loading and tuning Wazuh alerts template
-url_alerts_template="https://raw.githubusercontent.com/wazuh/wazuh/v3.9.0/extensions/elasticsearch/wazuh-elastic6-template-alerts.json"
-alerts_template="/tmp/wazuh-elastic6-template-alerts.json"
+url_alerts_template="https://raw.githubusercontent.com/wazuh/wazuh/v3.9.1/extensions/elasticsearch/6.x/wazuh-template.json"
+alerts_template="/tmp/wazuh-template.json"
 curl -Lo ${alerts_template} ${url_alerts_template}
 curl -XPUT "http://${eth0_ip}:9200/_template/wazuh" -H 'Content-Type: application/json' -d@${alerts_template}
 curl -XDELETE "http://${eth0_ip}:9200/wazuh-alerts-*"
