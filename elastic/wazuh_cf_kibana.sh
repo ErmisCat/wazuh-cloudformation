@@ -170,13 +170,13 @@ echo "/etc/default/kibana completed" >> /tmp/log
 if [[ ${EnvironmentType} == 'staging' ]]
 then
 	# Adding Wazuh pre_release repository
-  plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-3.9.1_6.7.2.zip"
+  plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-3.9.1_6.8.0.zip"
 elif [[ ${EnvironmentType} == 'production' ]]
 then
-plugin_url="https://packages.wazuh.com/wazuhapp/wazuhapp-3.9.0_6.7.2.zip"
+plugin_url="https://packages.wazuh.com/wazuhapp/wazuhapp-3.9.1_6.8.0.zip"
 elif [[ ${EnvironmentType} == 'devel' ]]
 then
-plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-3.9.1_6.7.2.zip"
+plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-3.9.1_6.8.0.zip"
 else
 	echo 'no repo' >> /tmp/stage
 fi
