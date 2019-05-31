@@ -238,7 +238,7 @@ cat >> ${manager_config} << EOF
 EOF
 fi
 
-the_uid=$(id -u `whoami`)
+the_uid=$(id -u wazuh)
 
 # Audit rules
 cat >> /etc/audit/rules.d/audit.rules << EOF
