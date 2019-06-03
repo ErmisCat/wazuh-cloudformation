@@ -472,7 +472,7 @@ Resources:
         !Sub
         - https://github.com/wazuh/wazuh-cloudformation/blob/aws-nist/wazuh_template.yml
       TimeoutInMinutes: 30
-    Parameters:
+      Parameters:
         AvailabilityZone: !Ref pAvailabilityZones
         KeyPairName: !Ref pEC2KeyPair
         WazuhVpc:
