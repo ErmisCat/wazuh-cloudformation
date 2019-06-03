@@ -57,6 +57,7 @@ Metadata:
         Label:
           default: "AWS environment"
         Parameters:
+          - WazuhVpc
           - AvailabilityZone
           - KeyPairName
       - 
@@ -102,6 +103,10 @@ Metadata:
           - SSLCertificateARN
 
 Parameters:
+
+  WazuhVpc:
+    Description: The VPC where the infrastructure will be isolated.
+    Type: 'AWS::EC2::VPC'
 
   # AWS environment 
   AvailabilityZone:
@@ -161,74 +166,8 @@ Parameters:
       - staging
       - devel    
     ConstraintDescription: Must contain valid instance type
-    Default: staging
+    Default: production
     Description: Select a stage
-    Type: String
-  AgentInstanceType:
-    AllowedValues:
-      - t2.micro
-      - t2.medium
-      - t2.large
-      - m5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.micro
-    Description: Type of EC2 instance for Wazuh Amazon Linux agent instance
-    Type: String
-
-  CentosAgentInstanceType:
-    AllowedValues:
-      - t2.micro
-      - t2.medium
-      - t2.large
-      - m5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.micro
-    Description: Type of EC2 instance for Wazuh CentOS agent instance
-    Type: String
-
-
-  RedHatInstanceType:
-    AllowedValues:
-      - t2.micro
-      - t2.medium
-      - t2.large
-      - m5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.micro
-    Description: Type of EC2 instance for Wazuh RedHat agent instance
-    Type: String
-
-  WindowsInstanceType:
-    AllowedValues:
-      - t2.micro
-      - t2.medium
-      - t2.large
-      - m5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.micro
-    Description: Type of EC2 instance for Windows Wazuh agent instance
-    Type: String
-
-  DebianInstanceType:
-    AllowedValues:
-      - t2.micro
-      - t2.medium
-      - t2.large
-      - m5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.micro
-    Description: Type of EC2 instance for Debian Wazuh agent instance
-    Type: String
-
-  UbuntuInstanceType:
-    AllowedValues:
-      - t2.micro
-      - t2.medium
-      - t2.large
-      - m5.large
-    ConstraintDescription: Must contain valid instance type
-    Default: t2.micro
-    Description: Type of EC2 instance for Ubuntu Wazuh agent instance
     Type: String
 
   ElasticInstanceType:
@@ -339,29 +278,11 @@ Parameters:
     Type: String
 
   SSLCertificateARN:
-    Description: '(Optional) Used for HTTPS access to WUI. Existent certificate, identified by its Amazon Resource Name (ARN).'
+    Description: 'Used for HTTPS access to WUI. Existent certificate, identified by its Amazon Resource Name (ARN).'
     Type: String
-
-Conditions: 
-  HasSslCert: !Not [!Equals [!Ref SSLCertificateARN, ""]]
 
 Resources:
 
-  # Network resources
-  WazuhVpc:
-    Type: 'AWS::EC2::VPC'
-    Properties:
-      CidrBlock: !FindInMap
-        - SubnetConfig
-        - WazuhVpc
-        - CIDR
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
-      Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
-        - Key: Name
-          Value: !Ref 'AWS::StackName'
   SubnetWazuh:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -646,7 +567,6 @@ Resources:
   # TLS Target Group for Network Load Balancer
   TLSTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Condition: HasSslCert
     Properties:
       Name: !Sub '${AWS::StackName}-TLSTargetGroup'
       Port: !Ref KibanaPort
@@ -707,7 +627,6 @@ Resources:
   # Listener for Kibana WUI
   TLSListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
-    Condition: HasSslCert
     Properties:
       DefaultActions:
       - Type: forward
@@ -1113,42 +1032,6 @@ Resources:
         - AllocationId
 
 Outputs:
-  ElasticWazuhVersion:
-    Description: Elastic Stack and Wazuh versions
-    Value: !Ref ElasticWazuhVersion
-  SshUsername:
-    Description: SSH Username
-    Value: !Ref SshUsername
-  KibanaPort: 
-    Description: Port number for Kibana WUI access
-    Value: !Ref KibanaPort
-  KibanaUsername:
-    Description: Username for Kibana WUI
-    Value: !Ref KibanaUsername
-  WazuhServerPort:
-    Description: Port number for agents communication with Wazuh server
-    Value: !Ref WazuhServerPort
-  WazuhRegistrationPort:
-    Description: Port number for agents registration with Wazuh server
-    Value: !Ref WazuhRegistrationPort
-  WazuhApiPort:
-    Description: Port number used by Wazuh API
-    Value: !Ref WazuhApiPort
-  WazuhApiAdminUsername:
-    Description: Admin username for Wazuh API
-    Value: !Ref WazuhApiAdminUsername
-  KeyPairName:
-    Description: Key pair used for SSH access
-    Value: !Ref KeyPairName
-  WazuhInstanceType:
-    Description: Wazuh servers instance type
-    Value: !Ref WazuhInstanceType
-  AgentInstanceType:
-    Description: Amazon Linux Wazuh agent instance type
-    Value: !Ref AgentInstanceType
-  ElasticInstanceType:
-    Description: Elasticsearch data nodes instance type
-    Value: !Ref ElasticInstanceType
-  KibanaInstanceType:
-    Description: Kibana server instance type
-    Value: !Ref KibanaInstanceType
+  WazuhMasterIp:
+    Description: Wazuh Master instance IP
+    Value: ${WazuhMasterInstance.PrivateIp}
