@@ -885,7 +885,6 @@ Resources:
                 WazuhRegistrationPassword: ${WazuhRegistrationPassword}
                 WazuhClusterKey: ${WazuhClusterKey}
                 ElbLogstashDNS: ${ElbLogstash.DNSName}
-                WindowsPublicIp: ${Windows.PublicIp}
                 AwsSecretKey: ${AwsSecretKey}
                 AwsAccessKey: ${AwsAccessKey}
                 VirusTotalKey: ${VirusTotalKey}

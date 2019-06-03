@@ -67,6 +67,65 @@ Metadata:
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
 Parameters:
+  pSshUsername:
+    Default: wazuh
+    Description: SSH username
+    Type: String
+    MinLength: '5'
+    MaxLength: '32'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: Only alphanumeric characters. Minimum length 5. Maximum length 32.
+  pSshPassword:
+    Description: SSH Password
+    NoEcho: 'True'
+    Type: String
+    MinLength: '8'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: Only alphanumeric characters. Minimum length 8. Maximum length 64.
+  pWazuhInstanceType:
+    AllowedValues:
+      - t2.micro
+      - t2.medium
+      - t2.large
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+
+    ConstraintDescription: Must contain valid instance type
+    Default: t2.medium
+    Description: Type of EC2 instance for Wazuh instance
+    Type: String
+  pWazuhApiAdminPassword:
+    Description: Admin password for Wazuh API
+    NoEcho: 'True'
+    Type: String
+    MinLength: '1'
+    MaxLength: '48'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: Only alphanumeric characters
+
+  pKibanaPassword:
+    Description: Password for Kibana access
+    NoEcho: 'True'
+    Type: String
+    MinLength: '1'
+    MaxLength: '48'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: Only alphanumeric characters
+  pAwsSecretKey:
+    Description: (Optional) Secret key for AWS integration
+    Type: String
+
+  pAwsAccessKey:
+    Description: (Optional) Access key for AWS integration
+    Type: String
+
+
+  pSSLCertificateARN:
+    Description: 'Used for HTTPS access to WUI. Existent certificate, identified by its Amazon Resource Name (ARN).'
+    Type: String
+
   pDBPassword:
     Description: Mixed alphanumeric and must be between 8 and 28 characters and contain
       at least one capital letter
@@ -302,25 +361,7 @@ Resources:
           - RegionServiceSupport
           - !Ref AWS::Region
           - Glacier
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
   ProductionVpcTemplate:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -468,9 +509,7 @@ Resources:
   WazuhTemplate:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:
-        !Sub
-        - https://github.com/wazuh/wazuh-cloudformation/blob/aws-nist/wazuh_template.yml
+      TemplateURL: https://github.com/wazuh/wazuh-cloudformation/blob/aws-nist/wazuh_template.yml
       TimeoutInMinutes: 30
       Parameters:
         AvailabilityZone: !Ref pAvailabilityZones
