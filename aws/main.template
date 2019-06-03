@@ -35,6 +35,18 @@ Metadata:
       Parameters:
       - QSS3BucketName
       - QSS3KeyPrefix
+    - Label:
+        default: Wazuh required parameters
+      Parameters:
+      - pSshUsername
+      - pSshPassword
+      - pWazuhInstanceType
+      - pWazuhApiAdminPassword
+      - pKibanaPassword
+      - pAwsSecretKey
+      - pAwsAccessKey
+      - pSSLCertificateARN
+
     ParameterLabels:
       pDBPassword:
         default: Database Password
@@ -54,10 +66,6 @@ Metadata:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
-      DeepSecurityAdminName:
-        default: Administrator username for Deep Security
-      DeepSecurityAdminPass:
-        default: Administrator password for Deep Security
 Parameters:
   pDBPassword:
     Description: Mixed alphanumeric and must be between 8 and 28 characters and contain
@@ -100,27 +108,6 @@ Parameters:
     AllowedValues:
     - default
     - dedicated
-  DeepSecurityAdminName:
-    Default: MasterAdmin
-    Description: The Deep Security Manager administrator username for Web Console
-      Access.
-    Type: String
-    MinLength: 1
-    MaxLength: 16
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: Must begin with a letter and contain only alphanumeric
-      characters. Min length 1, max length 16
-  DeepSecurityAdminPass:
-    NoEcho: true
-    Description: The Deep Security Manager administrator password. Must be 8-41 characters
-      long and can only contain alphanumeric characters or the following special characters
-      !^*-_+
-    Type: String
-    MinLength: 8
-    MaxLength: 41
-    AllowedPattern: '[a-zA-Z0-9!^*\-_+]*'
-    ConstraintDescription: Can only contain alphanumeric characters or the following
-      special characters !^*-_+ Min length 8, max length 41
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-.]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -485,11 +472,23 @@ Resources:
         !Sub
         - https://github.com/wazuh/wazuh-cloudformation/blob/aws-nist/wazuh_template.yml
       TimeoutInMinutes: 30
-
-
-
-  
-  
+    Parameters:
+        AvailabilityZone: !Ref pAvailabilityZones
+        KeyPairName: !Ref pEC2KeyPair
+        WazuhVpc:
+          !GetAtt
+          - ProductionVpcTemplate
+          - Outputs.rVPCProduction
+        AvailabilityZone: !Ref pAvailabilityZones
+        SshUsername: !Ref pSshUsername
+        SshPassword: !Ref pSshPassword
+        WazuhInstanceType: !Ref pWazuhInstanceType
+        WazuhApiAdminPassword: !Ref pWazuhApiAdminPassword
+        KibanaPassword: !Ref pKibanaPassword
+        AwsSecretKey: !Ref pAwsSecretKey
+        AwsAccessKey: !Ref pAwsAccessKey
+        SSLCertificateARN: !Ref pSSLCertificateARN
+   
 
   ApplicationTemplate:
     Type: AWS::CloudFormation::Stack
@@ -585,11 +584,7 @@ Resources:
         WazuhManagerIp:
           !GetAtt
           - WazuhTemplate
-          - Outputs.WazuhManagerIp
-        DeepSecurityHeartbeat:
-          !GetAtt
-          - WazuhTemplate
-          - Outputs.DeepSecurityHeartbeat
+          - Outputs.WazuhMasterIp
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
 

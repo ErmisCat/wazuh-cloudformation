@@ -683,7 +683,7 @@ Resources:
           EOF
 
           WAZUH_MANAGER_IP="${MasterIp}" yum install wazuh-agent
-        - DSMURL: !Ref WazuhManagerIp
+        - MasterIp: !Ref WazuhManagerIp
   rAutoScalingGroupWeb:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: rAutoScalingConfigWeb
