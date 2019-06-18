@@ -71,7 +71,6 @@ Metadata:
         Parameters:
           - WazuhServerPort
           - WazuhRegistrationPort
-          - WazuhRegistrationPassword
           - WazuhApiPort
           - WazuhApiAdminUsername
           - WazuhApiAdminPassword
@@ -89,8 +88,6 @@ Metadata:
         Parameters:
           - AwsSecretKey
           - AwsAccessKey
-          - VirusTotalKey
-          - SlackHook
       -
         Label:
           default: "SSL Certificate"
@@ -138,8 +135,9 @@ Parameters:
       - 6.6.2_3.9.0
       - 6.7.0_3.9.0
       - 6.7.1_3.9.0
+      - 6.8.0_3.9.2
     ConstraintDescription: Format is ElasticVersion_WazuhVersion
-    Default: 6.7.1_3.9.0
+    Default: 6.8.0_3.9.2
     Description: Elastic and Wazuh versions to be installed
     Type: String
   WazuhInstanceType:
@@ -199,14 +197,6 @@ Parameters:
     Default: '1515'
     Description: Port for agents registration with Wazuh server
     Type: String
-  WazuhRegistrationPassword:
-    Description: Password for Wazuh agents registration
-    NoEcho: 'True'
-    Type: String
-    MinLength: '1'
-    MaxLength: '48'
-    AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: Only alphanumeric characters
   WazuhApiPort:
     Default: '55000'
     Description: Port for Wazuh server API
@@ -262,14 +252,6 @@ Parameters:
 
   AwsAccessKey:
     Description: (Optional) Access key for AWS integration
-    Type: String
-
-  VirusTotalKey:
-    Description: (Optional) Key for VirusTotal integration
-    Type: String
-
-  SlackHook:
-    Description: (Optional) Webhook for Slack integration
     Type: String
 
   SSLCertificateARN:
@@ -893,13 +875,10 @@ Resources:
                 WazuhApiPort: ${WazuhApiPort}
                 WazuhServerPort: ${WazuhServerPort}
                 WazuhRegistrationPort: ${WazuhRegistrationPort}
-                WazuhRegistrationPassword: ${WazuhRegistrationPassword}
                 WazuhClusterKey: ${WazuhClusterKey}
                 ElbLogstashDNS: ${ElbLogstash.DNSName}
                 AwsSecretKey: ${AwsSecretKey}
                 AwsAccessKey: ${AwsAccessKey}
-                VirusTotalKey: ${VirusTotalKey}
-                SlackHook: ${SlackHook}
                 EnvironmentType: ${EnvironmentType}
               mode: '000600'
               owner: root
@@ -983,8 +962,6 @@ Resources:
                 ElbLogstashDNS: ${ElbLogstash.DNSName}
                 AwsSecretKey: ${AwsSecretKey}
                 AwsAccessKey: ${AwsAccessKey}
-                VirusTotalKey: ${VirusTotalKey}
-                SlackHook: ${SlackHook}
                 EnvironmentType: ${EnvironmentType}
               mode: '000600'
               owner: root
