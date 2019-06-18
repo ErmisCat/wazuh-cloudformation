@@ -98,8 +98,8 @@ Parameters:
 
   WazuhVpc:
     Description: The VPC where the infrastructure will be isolated.
-    Type: 'AWS::EC2::VPC'
-
+    Type: String
+ 
   # AWS environment 
   AvailabilityZone:
     Description: Select an availability zone for the VPC
