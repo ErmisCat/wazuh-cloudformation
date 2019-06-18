@@ -329,7 +329,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/iam.template
+        - https://aws-nist.s3-us-west-1.amazonaws.com/iam.template
         - QSS3Region:
             !If
             - GovCloudCondition
@@ -342,7 +342,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/logging.template
+        - https://aws-nist.s3-us-west-1.amazonaws.com/logging.template
         - QSS3Region:
             !If
             - GovCloudCondition
@@ -362,7 +362,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/vpc-production.template
+        - https://aws-nist.s3-us-west-1.amazonaws.com/vpc-production.template
         - QSS3Region:
             !If
             - GovCloudCondition
@@ -412,7 +412,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/vpc-management.template
+        - https://aws-nist.s3-us-west-1.amazonaws.com/vpc-management.template
         - QSS3Region:
             !If
             - GovCloudCondition
@@ -489,7 +489,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-compliance-common/templates/config-rules.template
+        - https://aws-nist.s3-us-west-1.amazonaws.com/config-rules.template
         - QSS3Region:
             !If
             - GovCloudCondition
@@ -531,7 +531,7 @@ Resources:
     Properties:
       TemplateURL:
         !Sub
-        - https://${QSS3BucketName}.${QSS3Region}.amazonaws.com/${QSS3KeyPrefix}templates/application.template
+        - https://aws-nist.s3-us-west-1.amazonaws.com/application.template
         - QSS3Region:
             !If
             - GovCloudCondition
