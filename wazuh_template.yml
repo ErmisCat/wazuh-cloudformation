@@ -260,21 +260,6 @@ Parameters:
 
 Resources:
 
-  # Network resources
-  WazuhVpc:
-    Type: 'AWS::EC2::VPC'
-    Properties:
-      CidrBlock: !FindInMap
-        - SubnetConfig
-        - WazuhVpc
-        - CIDR
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
-      Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
-        - Key: Name
-          Value: !Ref 'AWS::StackName'
 
   SubnetWazuh:
     Type: 'AWS::EC2::Subnet'
