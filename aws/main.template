@@ -91,7 +91,6 @@ Parameters:
       - m5.large
       - m5.xlarge
       - m5.2xlarge
-
     ConstraintDescription: Must contain valid instance type
     Default: t2.medium
     Description: Type of EC2 instance for Wazuh instance
@@ -104,7 +103,6 @@ Parameters:
     MaxLength: '48'
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: Only alphanumeric characters
-
   pKibanaPassword:
     Description: Password for Kibana access
     NoEcho: 'True'
@@ -509,7 +507,7 @@ Resources:
   WazuhTemplate:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://github.com/wazuh/wazuh-cloudformation/blob/aws-nist/wazuh_template.yml
+      TemplateURL: https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/wazuh_template.yml
       TimeoutInMinutes: 30
       Parameters:
         AvailabilityZone: !Ref pAvailabilityZones
