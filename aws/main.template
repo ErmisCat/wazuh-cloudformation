@@ -114,16 +114,12 @@ Parameters:
   pAwsSecretKey:
     Description: (Optional) Secret key for AWS integration
     Type: String
-
   pAwsAccessKey:
     Description: (Optional) Access key for AWS integration
     Type: String
-
-
   pSSLCertificateARN:
     Description: 'Used for HTTPS access to WUI. Existent certificate, identified by its Amazon Resource Name (ARN).'
     Type: String
-
   pDBPassword:
     Description: Mixed alphanumeric and must be between 8 and 28 characters and contain
       at least one capital letter
@@ -340,6 +336,7 @@ Resources:
             - s3-us-gov-west-1
             - s3
       TimeoutInMinutes: 20
+ 
   LoggingTemplate:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -408,6 +405,7 @@ Resources:
           - InstanceType
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-compliance-common/
+
   ManagementVpcTemplate:
     Type: AWS::CloudFormation::Stack
     DependsOn: ProductionVpcTemplate
@@ -479,6 +477,7 @@ Resources:
           - InstanceType
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-compliance-common/
+
   ConfigRulesTemplate:
     Type: AWS::CloudFormation::Stack
     Condition: LoadConfigRulesTemplate
@@ -525,7 +524,6 @@ Resources:
         AwsSecretKey: !Ref pAwsSecretKey
         AwsAccessKey: !Ref pAwsAccessKey
         SSLCertificateARN: !Ref pSSLCertificateARN
-   
 
   ApplicationTemplate:
     Type: AWS::CloudFormation::Stack
@@ -624,23 +622,6 @@ Resources:
           - Outputs.WazuhMasterIp
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Outputs:
   TemplateType:
