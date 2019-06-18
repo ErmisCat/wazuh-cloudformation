@@ -509,13 +509,14 @@ Resources:
       TemplateURL: https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/wazuh_template.yml
       TimeoutInMinutes: 30
       Parameters:
-        AvailabilityZone: !Ref pAvailabilityZones
+        AvailabilityZone: !Join
+          - ','
+          - !Ref pAvailabilityZones
         KeyPairName: !Ref pEC2KeyPair
         WazuhVpc:
           !GetAtt
           - ProductionVpcTemplate
           - Outputs.rVPCProduction
-        AvailabilityZone: !Ref pAvailabilityZones
         SshUsername: !Ref pSshUsername
         SshPassword: !Ref pSshPassword
         WazuhInstanceType: !Ref pWazuhInstanceType
