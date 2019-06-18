@@ -506,7 +506,7 @@ Resources:
   WazuhTemplate:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/aws-nist/wazuh_template.yml
+      TemplateURL: https://aws-nist.s3-us-west-1.amazonaws.com/wazuh_template.yml
       TimeoutInMinutes: 30
       Parameters:
         AvailabilityZone: !Join
