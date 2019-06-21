@@ -417,7 +417,7 @@ Resources:
           !GetAtt
           - ProductionVpcTemplate
           - Outputs.rVPCProduction
-        EnableTCPForwarding: "true",
+        EnableTCPForwarding: "true"
         KeyPairName: !Ref pEC2KeyPair
         PublicSubnet1ID:
           !GetAtt
@@ -427,7 +427,7 @@ Resources:
           !GetAtt
           - ProductionVpcTemplate
           - Outputs.rDMZSubnetB
-      RemoteAccessCIDR: !Ref pBastionSSHCIDR
+        RemoteAccessCIDR: !Ref pBastionSSHCIDR
 
   ConfigRulesTemplate:
     Type: AWS::CloudFormation::Stack
