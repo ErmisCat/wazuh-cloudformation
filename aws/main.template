@@ -406,77 +406,28 @@ Resources:
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-compliance-common/
 
-  ManagementVpcTemplate:
+  LinuxBastionTemplate:
     Type: AWS::CloudFormation::Stack
     DependsOn: ProductionVpcTemplate
     Properties:
-      TemplateURL:
-        !Sub
-        - https://aws-nist.s3-us-west-1.amazonaws.com/vpc-management.template
-        - QSS3Region:
-            !If
-            - GovCloudCondition
-            - s3-us-gov-west-1
-            - s3
-      TimeoutInMinutes: 20
+      TemplateURL: https://aws-quickstart.s3.amazonaws.com/quickstart-linux-bastion/templates/linux-bastion.template
       Parameters:
-        pProductionVPC:
+        KeyPairName: !Ref pEC2KeyPair
+        VPCID:
           !GetAtt
           - ProductionVpcTemplate
           - Outputs.rVPCProduction
-        pRouteTableProdPrivate:
+        EnableTCPForwarding: "true",
+        KeyPairName: !Ref pEC2KeyPair
+        PublicSubnet1ID:
           !GetAtt
           - ProductionVpcTemplate
-          - Outputs.rRouteTableProdPrivate
-        pRouteTableProdPublic:
+          - Outputs.rDMZSubnetA
+        PublicSubnet2ID:
           !GetAtt
           - ProductionVpcTemplate
-          - Outputs.rRouteTableProdPublic
-        pProductionCIDR: 10.100.0.0/16
-        pBastionSSHCIDR: 0.0.0.0/0
-        pManagementCIDR: 10.10.0.0/16
-        pManagementDMZSubnetACIDR: 10.10.1.0/24
-        pManagementDMZSubnetBCIDR: 10.10.2.0/24
-        pManagementPrivateSubnetACIDR: 10.10.20.0/24
-        pManagementPrivateSubnetBCIDR: 10.10.30.0/24
-        pManagementVPCName: Management VPC
-        pEC2KeyPairBastion: !Ref pEC2KeyPairBastion
-        pEC2KeyPair: !Ref pEC2KeyPair
-        pVPCTenancy: !Ref pVPCTenancy
-        pBastionAmi:
-          !FindInMap
-          - AWSAMIRegionMap
-          - !Ref AWS::Region
-          - AMZNLINUXHVM
-        pRegionAZ1Name: !Select [ 0, !Ref pAvailabilityZones ]
-        pRegionAZ2Name: !Select [ 1, !Ref pAvailabilityZones ]
-        pEnvironment:
-          !FindInMap
-          - CustomVariables
-          - vResourceEnvironmentTagValue
-          - Value
-        pBastionInstanceType:
-          !If
-          - LaunchAsDedicatedInstance
-          - m4.large
-          - t2.small
-        pSupportsNatGateway:
-          !FindInMap
-          - RegionServiceSupport
-          - !Ref AWS::Region
-          - NatGateway
-        pNatAmi:
-          !FindInMap
-          - AWSAMIRegionMap
-          - !Ref AWS::Region
-          - AMZNLINUXHVM
-        pNatInstanceType:
-          !FindInMap
-          - AWSAMIRegionMap
-          - !Ref AWS::Region
-          - InstanceType
-        QSS3BucketName: !Ref QSS3BucketName
-        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-compliance-common/
+          - Outputs.rDMZSubnetB
+      RemoteAccessCIDR: !Ref pBastionSSHCIDR
 
   ConfigRulesTemplate:
     Type: AWS::CloudFormation::Stack
@@ -484,7 +435,7 @@ Resources:
     DependsOn:
     - IamTemplate
     - ProductionVpcTemplate
-    - ManagementVpcTemplate
+    - LinuxBastionTemplate
     - LoggingTemplate
     Properties:
       TemplateURL:
@@ -633,7 +584,7 @@ Outputs:
     Description: Use this IP via SSH to connect to Bastion Instance
     Value:
       !GetAtt
-      - ManagementVpcTemplate
+      - LinuxBastionTemplate
       - Outputs.rBastionInstanceIP
   LandingPageURL:
     Value:
