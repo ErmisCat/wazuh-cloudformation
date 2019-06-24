@@ -509,6 +509,10 @@ Resources:
       TemplateURL: https://aws-nist.s3-us-west-1.amazonaws.com/wazuh_template.yml
       TimeoutInMinutes: 30
       Parameters:
+        pSubnetWazuh: 
+          !GetAtt
+          - ProductionVpcTemplate
+          - Outputs.rAppPrivateSubnetA
         AvailabilityZone: !Join
           - ','
           - !Ref pAvailabilityZones
@@ -525,10 +529,7 @@ Resources:
         AwsSecretKey: !Ref pAwsSecretKey
         AwsAccessKey: !Ref pAwsAccessKey
         SSLCertificateARN: !Ref pSSLCertificateARN
-        SubnetWazuh:
-          !GetAtt
-          - ProductionVpcTemplate
-          - Outputs.rAppPrivateSubnetA
+
 
   ApplicationTemplate:
     Type: AWS::CloudFormation::Stack
