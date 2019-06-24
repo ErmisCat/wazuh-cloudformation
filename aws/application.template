@@ -946,7 +946,7 @@ Resources:
             protect=1
             EOF
 
-            WAZUH_MANAGER_IP="${MasterIp}" yum install wazuh-agent
+            WAZUH_MANAGER_IP="${MasterIp}" yum install wazuh-agent -y
 
           - QSS3Region:
               !If
