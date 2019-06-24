@@ -489,7 +489,6 @@ Resources:
           #!/bin/bash -xe
           /opt/aws/bin/cfn-init --stack ${AWS::StackName} --resource WazuhMasterInstance --configsets WazuhInstallationSet --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WazuhMasterInstance --region ${AWS::Region}
-    DependsOn: GatewayToInternet
   WazuhMasterEth0: 
     Type: AWS::EC2::NetworkInterface
     Properties:
@@ -559,7 +558,6 @@ Resources:
           #!/bin/bash -xe
           /opt/aws/bin/cfn-init --stack ${AWS::StackName} --resource WazuhWorkerInstance --configsets WazuhInstallationSet --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WazuhWorkerInstance --region ${AWS::Region}
-    DependsOn: GatewayToInternet
   WazuhWorkerEth0: 
     Type: AWS::EC2::NetworkInterface
     Properties:
