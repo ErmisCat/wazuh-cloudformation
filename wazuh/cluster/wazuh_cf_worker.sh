@@ -316,7 +316,7 @@ curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazu
 # File permissions
 chmod go-w /etc/filebeat/filebeat.yml
 chmod go-w /etc/filebeat/wazuh-template.json
-sed -i "s|YOUR_ELASTIC_SERVER_IP:5000|${elb_logstash}|" /etc/filebeat/filebeat.yml
+sed -i "s|YOUR_ELASTIC_SERVER_IP:5000|${elb_logstash}:5000|" /etc/filebeat/filebeat.yml
 
 systemctl restart filebeat
 echo "Started Filebeat" >> /tmp/log
