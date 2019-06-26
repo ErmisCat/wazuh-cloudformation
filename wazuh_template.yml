@@ -976,7 +976,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_elastic.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/elastic/wazuh_cf_elastic.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/elastic/wazuh_cf_elastic.sh
               mode: '000700'
               owner: root
               group: root
@@ -1056,7 +1056,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_kibana.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/elastic/wazuh_cf_kibana.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/elastic/wazuh_cf_kibana.sh
               mode: '000700'
               owner: root
               group: root
@@ -1122,7 +1122,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_splunk.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/splunk/wazuh_cf_splunk.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/splunk/wazuh_cf_splunk.sh
               mode: '000700'
               owner: root
               group: root
@@ -1199,7 +1199,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_master.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/cluster/wazuh_cf_master.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/cluster/wazuh_cf_master.sh
               mode: '000700'
               owner: root
               group: root
@@ -1287,7 +1287,7 @@ Resources:
               group: root
             /tmp/wazuh_cf_worker.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/cluster/wazuh_cf_worker.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/cluster/wazuh_cf_worker.sh
               mode: '000700'
               owner: root
               group: root
@@ -1365,7 +1365,7 @@ Resources:
               group: root
             /tmp/wazuh_agent_amazon.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/agents/wazuh_agent_amazon.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/agents/wazuh_agent_amazon.sh
               mode: '000700'
               owner: root
               group: root
@@ -1443,7 +1443,7 @@ Resources:
               group: root
             /tmp/wazuh_agent_centos.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/agents/wazuh_agent_centos.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/agents/wazuh_agent_centos.sh
               mode: '000700'
               owner: root
               group: root
@@ -1530,20 +1530,23 @@ Resources:
           $Password = (convertto-securestring -asplaintext ${SshPassword} -force)
           New-LocalUser "wazuh" -Password $Password -FullName "wazuh" -Description "Wazuh user for remote desktop"
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "wazuh"
-          
+          net user Administrator ${SshPassword}
           $master_ip=${WazuhNetworkLoadBalancer.DNSName}
-
-          $url = "https://packages.wazuh.com/3.x/windows/wazuh-agent-3.9.0-1.msi" 
+          $url = "https://packages.wazuh.com/3.x/windows/wazuh-agent-3.9.2-1.msi"
           $path = "C:\\Users\\Administrator\\Desktop\\wazuh-agent.msi" 
-
           if(!(Split-Path -parent $path) -or !(Test-Path -pathType Container (Split-Path -parent $path))) { 
             $targetFile = Join-Path $pwd (Split-Path -leaf $path) 
           } 
-
+          try {
+            $LocalTempDir = $env:TEMP; $ChromeInstaller = "ChromeInstaller.exe"; (new-object    System.Net.WebClient).DownloadFile('http://dl.google.com/chrome/install/375.126/chrome_installer.exe', "$LocalTempDir\$ChromeInstaller"); & "$LocalTempDir\$ChromeInstaller" /silent /install; $Process2Monitor =  "ChromeInstaller"; Do { $ProcessesFound = Get-Process | ?{$Process2Monitor -contains $_.Name} | Select-Object -ExpandProperty Name; If ($ProcessesFound) { "Still running: $($ProcessesFound -join ', ')" | Write-Host; Start-Sleep -Seconds 2 } else { rm "$LocalTempDir\$ChromeInstaller" -ErrorAction SilentlyContinue -Verbose } } Until (!$ProcessesFound)
+          } catch {
+            $_.Exception.Message
+            "Error installing Google Chrome."
+          }
           (New-Object Net.WebClient).DownloadFile($url, $path) 
           New-Item -ItemType directory -Path C:\Santiago
           try {
-            Start-Process -FilePath "C:\\Users\\Administrator\\Desktop\\wazuh-agent.msi" -Wait -ArgumentList /q,ADDRESS=${WazuhNetworkLoadBalancer.DNSName},AUTHD_SERVER=${WazuhNetworkLoadBalancer.DNSName},AGENT_NAME="Win",GROUP="windows",PROTOCOL="TCP",PASSWORD=${WazuhRegistrationPassword}
+            Start-Process -FilePath "C:\\Users\\Administrator\\Desktop\\wazuh-agent.msi" -Wait -ArgumentList /q,ADDRESS=${WazuhNetworkLoadBalancer.DNSName},AUTHD_SERVER=${WazuhNetworkLoadBalancer.DNSName},AGENT_NAME="Windows",PROTOCOL="TCP",PASSWORD=${WazuhRegistrationPassword}
           } catch {
             $_.Exception.Message
             "Error installing Wazuh agent"
@@ -1596,7 +1599,7 @@ Resources:
               group: root
             /tmp/wazuh_agent_debian.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/agents/wazuh_cf_agent_debian.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/agents/wazuh_cf_agent_debian.sh
               mode: '000700'
               owner: root
               group: root
@@ -1681,7 +1684,7 @@ Resources:
               group: root
             /tmp/wazuh_agent_ubuntu.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/agents/wazuh_cf_agent_ubuntu.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/agents/wazuh_cf_agent_ubuntu.sh
               mode: '000700'
               owner: root
               group: root
@@ -1765,7 +1768,7 @@ Resources:
               group: root
             /tmp/wazuh_agent_rhel.sh:
               source: !Sub >-
-                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/master/wazuh/agents/wazuh_agent_rhel.sh
+                https://raw.githubusercontent.com/wazuh/wazuh-cloudformation/3.9.2_6.8.0/wazuh/agents/wazuh_agent_rhel.sh
               mode: '000700'
               owner: root
               group: root
