@@ -40,7 +40,7 @@ adduser ${ssh_username}
 echo "${ssh_username} ALL=(ALL)NOPASSWD:ALL" >> /etc/sudoers
 usermod --password $(openssl passwd -1 ${ssh_password}) ${ssh_username}
 sed -i 's|[#]*PasswordAuthentication no|PasswordAuthentication yes|g' /etc/ssh/sshd_config
-service sshd restart
+systemctl restart sshd
 
 echo "Created SSH user." >> /tmp/log
 
@@ -70,9 +70,9 @@ fi
 rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
 elastic_major_version=$(echo ${elastic_version} | cut -d'.' -f1)
 cat > /etc/yum.repos.d/elastic.repo << EOF
-[elasticsearch-6.x]
-name=Elasticsearch repository for 6.x packages
-baseurl=https://artifacts.elastic.co/packages/6.x/yum
+[elasticsearch-${elastic_major_version}.x]
+name=Elasticsearch repository for ${elastic_major_version}.x packages
+baseurl=https://artifacts.elastic.co/packages/${elastic_major_version}.x/yum
 gpgcheck=1
 gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
 enabled=1
@@ -329,7 +329,7 @@ EOF
 
 auditctl -D
 auditctl -R /etc/audit/rules.d/audit.rules
-service auditd restart
+systemctl restart auditd
 # Localfiles
 cat >> ${manager_config} << EOF
 <ossec_config>
@@ -381,7 +381,7 @@ cat >> ${manager_config} << EOF
 EOF
 
 # Restart wazuh-manager
-service wazuh-manager restart
+systemctl restart wazuh-manager
 echo "Restarted Wazuh manager." >> /tmp/log
 
 # Installing NodeJS
@@ -406,7 +406,7 @@ sed -i "s/config.port = \"55000\";/config.port = \"${wazuh_api_port}\";/" /var/o
 echo "Setting port and SSL to Wazuh API." >> /tmp/log
 
 # Restart wazuh-api
-service wazuh-api restart
+systemctl restart wazuh-api 
 echo "Restarted Wazuh API." >> /tmp/log
 
 # Installing Filebeat
@@ -414,10 +414,18 @@ yum -y install filebeat-${elastic_version}
 chkconfig --add filebeat
 echo "Installed Filebeat." >> /tmp/log
 
+wazuh_major=`echo $wazuh_version | cut -d'.' -f1`
+wazuh_minor=`echo $wazuh_version | cut -d'.' -f2`
+wazuh_patch=`echo $wazuh_version | cut -d'.' -f3`
+elastic_minor_version=$(echo ${elastic_version} | cut -d'.' -f2)
+elastic_patch_version=$(echo ${elastic_version} | cut -d'.' -f3)
+
+curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_major.$wazuh_minor.$wazuh_patch/extensions/filebeat/6.x/filebeat.yml
+
 # Configuring Filebeat
-curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.9.1/extensions/filebeat/6.x/filebeat.yml
-sed -i "s/YOUR_ELASTIC_SERVER_IP/${elb_logstash}/" /etc/filebeat/filebeat.yml
-service filebeat restart
+sed -i "s|'http://YOUR_ELASTIC_SERVER_IP:9200'|${elb_logstash}|" /etc/filebeat/filebeat.yml
+
+systemctl restart filebeat
 echo "Restarted Filebeat." >> /tmp/log
 
 # Disable repositories
@@ -686,9 +694,9 @@ EOF
 
 # Attach agents to groups
 rhel_id=`/var/ossec/bin/manage_agents -l | grep RHEL | cut -d':' -f2 | cut -d ',' -f1`
-#windows_id = /var/ossec/bin/manage_agents -l | grep Windows | cut -d':' -f2 | cut -d ',' -f1
+windows_id=`/var/ossec/bin/manage_agents -l | grep Win | cut -d':' -f2 | cut -d ',' -f1`
 
 /var/ossec/bin/agent_groups -a -g redhat -i ${rhel_id} -q
 /var/ossec/bin/agent_groups -a -g mysql -i ${rhel_id} -q
 /var/ossec/bin/agent_groups -a -g apache -i ${rhel_id} -q
-#/var/ossec/bin/agent_groups -a -g windows -i ${windows_id} -q
+/var/ossec/bin/agent_groups -a -g windows -i ${windows_id} -q
