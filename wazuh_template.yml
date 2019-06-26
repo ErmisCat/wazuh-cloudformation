@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-
+Description: Provides a demo environment with a Wazuh cluster of two nodes, ASG of three Elasticsearch cluster nodes, a Kibana + Elasticsearch instance, a Logstash cluster, a Splunk Enterprise Indexer and six agents.
 Mappings:
   RegionMap:
     us-east-1:
