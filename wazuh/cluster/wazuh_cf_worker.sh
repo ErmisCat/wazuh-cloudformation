@@ -13,8 +13,6 @@ wazuh_cluster_key=$(cat /tmp/wazuh_cf_settings | grep '^WazuhClusterKey:' | cut 
 wazuh_master_ip=$(cat /tmp/wazuh_cf_settings | grep '^WazuhMasterIP:' | cut -d' ' -f2)
 elb_logstash=$(cat /tmp/wazuh_cf_settings | grep '^ElbLogstashDNS:' | cut -d' ' -f2)
 VirusTotalKey=$(cat /tmp/wazuh_cf_settings | grep '^VirusTotalKey:' | cut -d' ' -f2)
-AwsSecretKey=$(cat /tmp/wazuh_cf_settings | grep '^AwsSecretKey:' | cut -d' ' -f2)
-AwsAccessKey=$(cat /tmp/wazuh_cf_settings | grep '^AwsAccessKey:' | cut -d' ' -f2)
 SlackHook=$(cat /tmp/wazuh_cf_settings | grep '^SlackHook:' | cut -d' ' -f2)
 EnvironmentType=$(cat /tmp/wazuh_cf_settings | grep '^EnvironmentType:' | cut -d' ' -f2)
 splunk_username=$(cat /tmp/wazuh_cf_settings | grep '^SplunkUsername:' | cut -d' ' -f2)
@@ -31,7 +29,7 @@ adduser ${ssh_username}
 echo "${ssh_username} ALL=(ALL)NOPASSWD:ALL" >> /etc/sudoers
 usermod --password $(openssl passwd -1 ${ssh_password}) ${ssh_username}
 sed -i 's|[#]*PasswordAuthentication no|PasswordAuthentication yes|g' /etc/ssh/sshd_config
-service sshd restart
+systemctl restart sshd
 echo "Created SSH user." >> /tmp/log
 
 if [[ ${EnvironmentType} == 'staging' ]]
@@ -60,9 +58,9 @@ fi
 rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
 elastic_major_version=$(echo ${elastic_version} | cut -d'.' -f1)
 cat > /etc/yum.repos.d/elastic.repo << EOF
-[elasticsearch-6.x]
-name=Elasticsearch repository for 6.x packages
-baseurl=https://artifacts.elastic.co/packages/6.x/yum
+[elasticsearch-${elastic_major_version}.x]
+name=Elasticsearch repository for ${elastic_major_version}.x packages
+baseurl=https://artifacts.elastic.co/packages/${elastic_major_version}.x/yum
 gpgcheck=1
 gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
 enabled=1
@@ -111,7 +109,7 @@ cat >> ${manager_config} << EOF
 EOF
 
 # Restart for receiving cluster data
-service wazuh-manager restart
+systemctl restart wazuh-manager
 # Wait for cluster information to be received (rules,lists...)
 sleep 60
 
@@ -192,52 +190,6 @@ cat >> ${manager_config} << EOF
 EOF
 fi
 
-# AWS integration if key already set
-if [ "x${AwsAccessKey}" != "x" ]; then
-cat >> ${manager_config} << EOF
-<ossec_config>
-  <wodle name="aws-s3">
-    <disabled>no</disabled>
-    <remove_from_bucket>no</remove_from_bucket>
-    <interval>30m</interval>
-    <run_on_start>yes</run_on_start>
-    <skip_on_error>no</skip_on_error>
-    <bucket type="cloudtrail">
-      <name>wazuh-cloudtrail</name>
-      <access_key>${AwsAccessKey}</access_key>
-      <secret_key>${AwsSecretKey}</secret_key>
-      <only_logs_after>2019-MAR-24</only_logs_after>
-    </bucket>
-    <bucket type="guardduty">
-      <name>wazuh-aws-wodle</name>
-      <path>guardduty</path>
-      <access_key>${AwsAccessKey}</access_key>
-      <secret_key>${AwsSecretKey}</secret_key>
-      <only_logs_after>2019-MAR-24</only_logs_after>
-    </bucket>
-    <bucket type="custom">
-      <name>wazuh-aws-wodle</name>
-      <path>macie</path>
-      <access_key>${AwsAccessKey}</access_key>
-      <secret_key>${AwsSecretKey}</secret_key>
-      <only_logs_after>2019-MAR-24</only_logs_after>
-    </bucket>
-    <bucket type="vpcflow">
-      <name>wazuh-aws-wodle</name>
-      <path>vpc</path>
-      <access_key>XXXX</access_key>
-      <secret_key>XXXX</secret_key>
-      <only_logs_after>2019-MAR-24</only_logs_after>
-    </bucket>
-    <service type="inspector">
-      <access_key>XXXX</access_key>
-      <secret_key>XXXX</secret_key>
-    </service>
-  </wodle>
-</ossec_config>
-EOF
-fi
-
 the_uid=$(id -u wazuh)
 
 # Audit rules
@@ -248,7 +200,7 @@ EOF
 
 auditctl -D
 auditctl -R /etc/audit/rules.d/audit.rules
-service auditd restart
+systemctl restart auditd
 
 # Localfiles
 cat >> ${manager_config} << EOF
@@ -304,7 +256,7 @@ EOF
 echo "Cluster configuration" >> /tmp/log
 
 # Restart wazuh-manager
-service wazuh-manager restart
+systemctl restart wazuh-manager
 
 # Installing Filebeat
 yum -y install filebeat
@@ -354,8 +306,21 @@ echo "Starting Splunk..."
 echo "Done with Splunk." >> /tmp/log
 
 # Configuring Filebeat
-curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.9.1/extensions/filebeat/6.x/filebeat.yml
-sed -i "s/YOUR_ELASTIC_SERVER_IP/${elb_logstash}/" /etc/filebeat/filebeat.yml
-service filebeat start
+wazuh_major=`echo $wazuh_version | cut -d'.' -f1`
+wazuh_minor=`echo $wazuh_version | cut -d'.' -f2`
+wazuh_patch=`echo $wazuh_version | cut -d'.' -f3`
+elastic_minor_version=$(echo ${elastic_version} | cut -d'.' -f2)
+elastic_patch_version=$(echo ${elastic_version} | cut -d'.' -f3)
+curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_major.$wazuh_minor.$wazuh_patch/extensions/filebeat/7.x/filebeat.yml
+
+# Filebeat configuration
+curl -so /etc/filebeat/wazuh-template.json "https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_version/extensions/elasticsearch/7.x/wazuh-template.json"
+
+# File permissions
+chmod go-w /etc/filebeat/filebeat.yml
+chmod go-w /etc/filebeat/wazuh-template.json
+sed -i "s|'http://YOUR_ELASTIC_SERVER_IP:9200'|${elb_logstash}|" /etc/filebeat/filebeat.yml
+
+systemctl restart filebeat
 echo "Started Filebeat" >> /tmp/log
 echo "Done" >> /tmp/log
