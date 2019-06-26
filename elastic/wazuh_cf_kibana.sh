@@ -186,14 +186,6 @@ else
 fi
 
 NODE_OPTIONS="--max-old-space-size=4096" /usr/share/kibana/bin/kibana-plugin install ${plugin_url}
-cat >> /usr/share/kibana/plugins/wazuh/config.yml << 'EOF'
-wazuh.shards: 1
-wazuh.replicas: 1
-wazuh-version.shards: 1
-wazuh-version.replicas: 1
-wazuh.monitoring.shards: 1
-wazuh.monitoring.replicas: 1
-EOF
 echo "App installed!" >> /tmp/log
 
 # Configuring Wazuh API for Kibana plugin
