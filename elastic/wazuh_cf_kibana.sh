@@ -8,7 +8,6 @@ ssh_username=$(cat /tmp/wazuh_cf_settings | grep '^SshUsername:' | cut -d' ' -f2
 ssh_password=$(cat /tmp/wazuh_cf_settings | grep '^SshPassword:' | cut -d' ' -f2)
 elastic_version=$(cat /tmp/wazuh_cf_settings | grep '^Elastic_Wazuh:' | cut -d' ' -f2 | cut -d'_' -f1)
 wazuh_version=$(cat /tmp/wazuh_cf_settings | grep '^Elastic_Wazuh:' | cut -d' ' -f2 | cut -d'_' -f2)
-wazuh_major=`echo ${wazuh_version} | cut -d'.' -f 1`
 kibana_port=$(cat /tmp/wazuh_cf_settings | grep '^KibanaPort:' | cut -d' ' -f2)
 kibana_username=$(cat /tmp/wazuh_cf_settings | grep '^KibanaUsername:' | cut -d' ' -f2)
 kibana_password=$(cat /tmp/wazuh_cf_settings | grep '^KibanaPassword:' | cut -d' ' -f2)
@@ -18,6 +17,12 @@ wazuh_api_user=$(cat /tmp/wazuh_cf_settings | grep '^WazuhApiAdminUsername:' | c
 wazuh_api_password=$(cat /tmp/wazuh_cf_settings | grep '^WazuhApiAdminPassword:' | cut -d' ' -f2)
 wazuh_api_port=$(cat /tmp/wazuh_cf_settings | grep '^WazuhApiPort:' | cut -d' ' -f2)
 EnvironmentType=$(cat /tmp/wazuh_cf_settings | grep '^EnvironmentType:' | cut -d' ' -f2)
+wazuh_major=`echo $wazuh_version | cut -d'.' -f1`
+wazuh_minor=`echo $wazuh_version | cut -d'.' -f2`
+wazuh_patch=`echo $wazuh_version | cut -d'.' -f3`
+elastic_major_version=$(echo ${elastic_version} | cut -d'.' -f1)
+elastic_minor_version=$(echo ${elastic_version} | cut -d'.' -f2)
+elastic_patch_version=$(echo ${elastic_version} | cut -d'.' -f3)
 
 echo "Added env vars." >> /tmp/log
 
@@ -144,7 +149,7 @@ echo "Kibana installed." >> /tmp/log
 cat > /etc/kibana/kibana.yml << EOF
 elasticsearch.url: "http://${eth0_ip}:9200"
 server.port: 5601
-server.host: "localhost"
+server.host: "${eth0_ip}"
 server.ssl.enabled: false
 EOF
 echo "Kibana.yml configured." >> /tmp/log
@@ -166,19 +171,18 @@ EOF
 echo "/etc/default/kibana completed" >> /tmp/log
 
 # Installing Wazuh plugin for Kibana
-
 if [[ ${EnvironmentType} == 'staging' ]]
 then
-	# Adding Wazuh pre_release repository
-  plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-3.9.1_6.8.0.zip"
+  # Adding Wazuh pre_release repository
+plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-${wazuh_major}.${wazuh_minor}.${wazuh_patch}_${elastic_major_version}.${elastic_minor_version}.${elastic_patch_version}.zip"
 elif [[ ${EnvironmentType} == 'production' ]]
 then
-plugin_url="https://packages.wazuh.com/wazuhapp/wazuhapp-3.9.1_6.8.0.zip"
+plugin_url="https://packages.wazuh.com/wazuhapp/wazuhapp-${wazuh_major}.${wazuh_minor}.${wazuh_patch}_${elastic_major_version}.${elastic_minor_version}.${elastic_patch_version}.zip"
 elif [[ ${EnvironmentType} == 'devel' ]]
 then
-plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-3.9.1_6.8.0.zip"
+plugin_url="https://packages-dev.wazuh.com/pre-release/app/kibana/wazuhapp-${wazuh_major}.${wazuh_minor}.${wazuh_patch}_${elastic_major_version}.${elastic_minor_version}.${elastic_patch_version}.zip"
 else
-	echo 'no repo' >> /tmp/stage
+  echo 'no repo' >> /tmp/stage
 fi
 
 NODE_OPTIONS="--max-old-space-size=4096" /usr/share/kibana/bin/kibana-plugin install ${plugin_url}
@@ -240,15 +244,15 @@ cat > ${default_index} << EOF
 }
 EOF
 
-curl -POST "http://localhost:5601/api/kibana/settings" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d@${default_index}
+curl -POST "http://${eth0_ip}:5601/api/kibana/settings" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d@${default_index}
 rm -f ${default_index}
 
 # Configuring Kibana TimePicker
-curl -POST "http://localhost:5601/api/kibana/settings" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d \
+curl -POST "http://${eth0_ip}:5601/api/kibana/settings" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d \
 '{"changes":{"timepicker:timeDefaults":"{\n  \"from\": \"now-24h\",\n  \"to\": \"now\",\n  \"mode\": \"quick\"}"}}'
 
 # Do not ask user to help providing usage statistics to Elastic
-curl -POST "http://localhost:5601/api/telemetry/v1/optIn" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{"enabled":false}'
+curl -POST "http://${eth0_ip}:5601/api/telemetry/v1/optIn" -H "Content-Type: application/json" -H "kbn-xsrf: true" -d '{"enabled":false}'
 
 # Disable Elastic repository
 sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/elastic.repo
@@ -275,7 +279,7 @@ server {
     location / {
         auth_basic "Restricted";
         auth_basic_user_file /etc/nginx/conf.d/kibana.htpasswd;
-        proxy_pass http://127.0.0.1:5601/;
+        proxy_pass http://${eth0_ip}:5601/;
     }
 }
 EOF
