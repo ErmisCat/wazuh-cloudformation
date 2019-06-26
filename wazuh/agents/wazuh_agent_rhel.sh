@@ -27,7 +27,7 @@ adduser ${ssh_username}
 echo "${ssh_username} ALL=(ALL)NOPASSWD:ALL" >> /etc/sudoers
 usermod --password $(openssl passwd -1 ${ssh_password}) ${ssh_username}
 sed -i 's|[#]*PasswordAuthentication no|PasswordAuthentication yes|g' /etc/ssh/sshd_config
-service sshd restart
+systemctl restart sshd
 
 # Added trojan
 cp /usr/bin/w /usr/bin/w.backup
@@ -51,11 +51,11 @@ yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/containe
 
 # install Docker
 yum install -y docker-ce
-service docker start
+systemctl restart docker
 
 ### Use case 2: Web server
 yum install httpd -y
-service httpd restart
+systemctl restart httpd
 
 ### Use case 3: Mysql
 wget https://repo.mysql.com//mysql80-community-release-el7-2.noarch.rpm
@@ -67,15 +67,24 @@ mkdir /mysql
 touch /mysql/mysql.conf
 
 ### Use case 4: Netcat
-yum install nc -y
-
-### Use case 5: OpenSCAP
-yum install openscap-scanner -y
+yum install nc vim lsof openscap-scanner -y
 
 ### Use case 6: Suricata
 # Install Suricata
-yum -y install suricata
-
+curl -O https://copr.fedorainfracloud.org/coprs/jasonish/suricata-stable/repo/epel-7/jasonish-suricata-stable-epel-7.repo
+yum -y install suricata-4.1.4
+wget https://rules.emergingthreats.net/open/suricata-4.1.4/emerging.rules.tar.gz
+tar zxvf emerging.rules.tar.gz
+rm -f /etc/suricata/suricata.yaml
+wget -O /etc/suricata/suricata.yaml http://www.branchnetconsulting.com/wazuh/suricata.yaml
+tar -xvzf emerging.rules.tar.gz && mv rules/*.rules /etc/suricata/rules
+sed -i '/rule-files:/,/#only use the scada_special if you have the scada extensions compiled int/{//!d}' /etc/suricata/suricata.yaml
+sed -i '/rule-files/ a \  - "*.rules"' /etc/suricata/suricata.yaml
+chown suricata:suricata /etc/suricata/rules/*.rules
+chmod +r /etc/suricata/rules/*.rules
+systemctl daemon-reload
+systemctl enable suricata
+systemctl start suricata
 yum -y install audit
 
 uid=$(id -u wazuh)
@@ -88,11 +97,11 @@ EOF
 
 auditctl -D
 auditctl -R /etc/audit/rules.d/audit.rules
-service auditd restart
+systemctl restart auditd
 
 ### Use case 7: Diamorphine
 yum install "kernel-devel-uname-r == $(uname -r)" -y
-yum install gcc make epel-release -y
+yum install gcc make epel-release jq -y
 git clone https://github.com/m0nad/Diamorphine
 cd Diamorphine
 make
@@ -192,6 +201,9 @@ systemctl restart wazuh-agent
 systemctl restart suricata
 
 echo "Restarted Wazuh agent." >> /tmp/log
+
+# give time to execute Docker actions
+sleep 300
 
 # Executing docker commands
 docker pull nginx
