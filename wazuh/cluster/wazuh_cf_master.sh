@@ -423,7 +423,7 @@ elastic_patch_version=$(echo ${elastic_version} | cut -d'.' -f3)
 curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_major.$wazuh_minor.$wazuh_patch/extensions/filebeat/6.x/filebeat.yml
 
 # Configuring Filebeat
-sed -i "s|'http://YOUR_ELASTIC_SERVER_IP:9200'|${elb_logstash}|" /etc/filebeat/filebeat.yml
+sed -i "s|YOUR_ELASTIC_SERVER_IP:5000|${elb_logstash}|" /etc/filebeat/filebeat.yml
 
 systemctl restart filebeat
 echo "Restarted Filebeat." >> /tmp/log

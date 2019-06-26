@@ -311,15 +311,12 @@ wazuh_minor=`echo $wazuh_version | cut -d'.' -f2`
 wazuh_patch=`echo $wazuh_version | cut -d'.' -f3`
 elastic_minor_version=$(echo ${elastic_version} | cut -d'.' -f2)
 elastic_patch_version=$(echo ${elastic_version} | cut -d'.' -f3)
-curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_major.$wazuh_minor.$wazuh_patch/extensions/filebeat/7.x/filebeat.yml
-
-# Filebeat configuration
-curl -so /etc/filebeat/wazuh-template.json "https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_version/extensions/elasticsearch/7.x/wazuh-template.json"
+curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v$wazuh_major.$wazuh_minor.$wazuh_patch/extensions/filebeat/6.x/filebeat.yml
 
 # File permissions
 chmod go-w /etc/filebeat/filebeat.yml
 chmod go-w /etc/filebeat/wazuh-template.json
-sed -i "s|'http://YOUR_ELASTIC_SERVER_IP:9200'|${elb_logstash}|" /etc/filebeat/filebeat.yml
+sed -i "s|YOUR_ELASTIC_SERVER_IP:5000|${elb_logstash}|" /etc/filebeat/filebeat.yml
 
 systemctl restart filebeat
 echo "Started Filebeat" >> /tmp/log
