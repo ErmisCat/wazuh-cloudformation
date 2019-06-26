@@ -139,7 +139,7 @@ yum -y install logstash-${elastic_version}
 echo "Installed logstash." >> /tmp/log
 
 #Wazuh configuration for Logstash
-curl -so /etc/logstash/conf.d/01-wazuh.conf "https://raw.githubusercontent.com/wazuh/wazuh/v3.9.1/extensions/logstash/6.x/01-wazuh-remote.conf"
+curl -so /etc/logstash/conf.d/01-wazuh.conf "https://raw.githubusercontent.com/wazuh/wazuh/v3.9.2/extensions/logstash/6.x/01-wazuh-remote.conf"
 sed -i "s/localhost:9200/${eth0_ip}:9200/" /etc/logstash/conf.d/01-wazuh.conf
 
 # Creating data and logs directories
